@@ -1,3 +1,18 @@
-load $R1 $R3
+reset
+load $R1 $R2
 store $R3 $R1
+move $R1 $R4
+not $R5
+and $R1 $R2
+or $R1 $R5
+shiftr $R8 1
+shiftl $R7 2
 add $R1 $R2
+sub $R3 $R4
+test $R2 $R2
+jmpEq $R1
+jmpLE $R3
+jmpGE $R6
+jmpL $R3
+jmp $R8
+call $R7
