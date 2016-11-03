@@ -15,54 +15,54 @@ import java.util.Map;
 
 public class Assembler {
 	//TODO: stick all these constants in their own file
-	public static final String REG_1 = "$R1";
-	public static final String REG_2 = "$R2";
-	public static final String REG_3 = "$R3";
-	public static final String REG_4 = "$R4";
-	public static final String REG_5 = "$R5";
-	public static final String REG_6 = "$R6";
-	public static final String REG_7 = "$R7";
-	public static final String REG_8 = "$R8";
+	private static final String REG_1 = "$R1";
+	private static final String REG_2 = "$R2";
+	private static final String REG_3 = "$R3";
+	private static final String REG_4 = "$R4";
+	private static final String REG_5 = "$R5";
+	private static final String REG_6 = "$R6";
+	private static final String REG_7 = "$R7";
+	private static final String REG_8 = "$R8";
 
-	public static final String RESET_BIN 	= "000000";
-	public static final String LOAD_BIN 	= "000001";
-	public static final String STORE_BIN	= "000010";
-	public static final String MOVE_BIN 	= "000011";
-	public static final String NOT_BIN 		= "000100";
-	public static final String AND_BIN 		= "000101";
-	public static final String OR_BIN 		= "000110";
-	public static final String SHIFTR_BIN 	= "000111";
-	public static final String SHIFTL_BIN 	= "001000";
-	public static final String ADD_BIN 		= "001001";
-	public static final String SUB_BIN 		= "001010";
-	public static final String TEST_BIN 	= "001011";
-	public static final String JMPEQ_BIN 	= "001100";
-	public static final String JMPLE_BIN 	= "001101";
-	public static final String JMPGE_BIN 	= "001110";
-	public static final String JMPL_BIN 	= "001111";
-	public static final String JMPG_BIN 	= "010000";
-	public static final String JMP_BIN 		= "010001";
-	public static final String CALL_BIN		= "010010";
+	private static final String RESET_BIN 	= "000000";
+	private static final String LOAD_BIN 	= "000001";
+	private static final String STORE_BIN	= "000010";
+	private static final String MOVE_BIN 	= "000011";
+	private static final String NOT_BIN 		= "000100";
+	private static final String AND_BIN 		= "000101";
+	private static final String OR_BIN 		= "000110";
+	private static final String SHIFTR_BIN 	= "000111";
+	private static final String SHIFTL_BIN 	= "001000";
+	private static final String ADD_BIN 		= "001001";
+	private static final String SUB_BIN 		= "001010";
+	private static final String TEST_BIN 	= "001011";
+	private static final String JMPEQ_BIN 	= "001100";
+	private static final String JMPLE_BIN 	= "001101";
+	private static final String JMPGE_BIN 	= "001110";
+	private static final String JMPL_BIN 	= "001111";
+	private static final String JMPG_BIN 	= "010000";
+	private static final String JMP_BIN 		= "010001";
+	private static final String CALL_BIN		= "010010";
 
-	public static final String RESET = "reset";
-	public static final String LOAD = "load";
-	public static final String STORE = "store";
-	public static final String MOVE = "move";
-	public static final String NOT = "not";
-	public static final String AND = "and";
-	public static final String OR = "or";
-	public static final String SHIFTR = "shiftr";
-	public static final String SHIFTL = "shiftl";
-	public static final String ADD = "add";
-	public static final String SUB = "sub";
-	public static final String TEST = "test";
-	public static final String JMPEQ = "jmpEq";
-	public static final String JMPLE = "jmpLE";
-	public static final String JMPGE = "jmpGE";
-	public static final String JMPL = "jmpL";
-	public static final String JMPG = "jmpG";
-	public static final String JMP = "jmp";
-	public static final String CALL = "call";
+	private static final String RESET = "reset";
+	private static final String LOAD = "load";
+	private static final String STORE = "store";
+	private static final String MOVE = "move";
+	private static final String NOT = "not";
+	private static final String AND = "and";
+	private static final String OR = "or";
+	private static final String SHIFTR = "shiftr";
+	private static final String SHIFTL = "shiftl";
+	private static final String ADD = "add";
+	private static final String SUB = "sub";
+	private static final String TEST = "test";
+	private static final String JMPEQ = "jmpEq";
+	private static final String JMPLE = "jmpLE";
+	private static final String JMPGE = "jmpGE";
+	private static final String JMPL = "jmpL";
+	private static final String JMPG = "jmpG";
+	private static final String JMP = "jmp";
+	private static final String CALL = "call";
 
 
 	public static void main(String[] args) {
@@ -78,19 +78,12 @@ public class Assembler {
 		
 		List<String> binaryInstructionList = convertInstrToBinary(programInstructions);
 		List<String> hexInstructionList = convertBinInstrToHex(binaryInstructionList);
-		for (String s : binaryInstructionList) {
-			//System.out.println(s);
-		}
-		for (String s : hexInstructionList) {
-			//System.out.println(s);
-		}
+
 		
 		List<String> outputList = new ArrayList<>(constantsAndGlyphs);
 		outputList.add(0, "memory_initialization_vector=");
 		outputList.add(0, "memory_initialization_radix=16;");
-		for (String instr : hexInstructionList) {
-			outputList.add(instr);
-		}
+		outputList.addAll(hexInstructionList);
 		String lastInstr = outputList.get(outputList.size() -1);
 		lastInstr = lastInstr.substring(0, lastInstr.length()-1);
 		lastInstr = lastInstr + ";";
@@ -105,10 +98,10 @@ public class Assembler {
 			FileOutputStream fos = new FileOutputStream(fout);
 		 
 			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
-		
-			for (int i = 0; i < outputList.size(); i++) {
-				bw.write(outputList.get(i));
-				System.out.println(outputList.get(i));
+
+			for (String anOutputList : outputList) {
+				bw.write(anOutputList);
+				System.out.println(anOutputList);
 				bw.newLine();
 			}
 			bw.close();
@@ -222,12 +215,16 @@ public class Assembler {
 		String secondArg = "";
 		if (progInstruction.size() > 2) {
 			secondArg = calcArgBin(progInstruction.get(2));
-			binaryLine.append(secondArg);
+		}
+		binaryLine.append("00000");
+
+		if (progInstruction.size() > 2) {
+			binaryLine.append(firstArg);
 		}
 		else {
 			binaryLine.append("00000");
 		}
-		binaryLine.append(firstArg);
+//		binaryLine.append(firstArg);
 		binaryLine.append(instrBinaryCode);
 		machineCodeInstructionList.add(binaryLine.toString());
 
@@ -294,7 +291,7 @@ public class Assembler {
 		}
 		//if it's an address, starts with '0x'
 		else if (arg.startsWith("0x")) {
-			return convertHexAddressToBinary(arg.substring(2, arg.length() - 1));
+			return convertHexAddressToBinary(arg.substring(2, arg.length()));
 		}
 		//if it's anything else, it's probably just a number
 		else {
@@ -323,13 +320,14 @@ public class Assembler {
 	private static String convertHexAddressToBinary(String arg) {
 		int hexInteger = Integer.parseInt(arg, 16);
 		String binaryString = Integer.toString(hexInteger, 2);
-		StringBuilder sb = new StringBuilder();
-
-		for (int i = 0; i < 16 - binaryString.length(); i++) {
-			sb.append("0");
-		}
-		sb.append(binaryString);
-		return sb.toString();
+//		StringBuilder sb = new StringBuilder();
+//
+//		for (int i = 0; i < 16 - binaryString.length(); i++) {
+//			sb.append("0");
+//		}
+//		sb.append(binaryString);
+//		return sb.toString();
+		return binaryString;
 	}
 
 	private static String calcFirstArg(String arg) {
@@ -338,7 +336,7 @@ public class Assembler {
 	}
 
 	private static Map<String, Integer> calcFunctionLocations(List<List<String>> programInstructions) {
-
+//TODO: actually check functions
 		Map<String, Integer> functionLocations = new HashMap<>();
 		for (int i = 0; i < programInstructions.size(); i++) {
 			List<String> instruction = programInstructions.get(i);
