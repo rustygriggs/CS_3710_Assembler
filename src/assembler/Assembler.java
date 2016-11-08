@@ -66,7 +66,7 @@ public class Assembler {
 
 
 	public static void main(String[] args) {
-		List<String> programLines = readFile("C:/Users/Rusty/workspace/CS_3710/src/assembler/sampleProgram");
+		List<String> programLines = readFile("C:/Users/Rusty/workspace/CS_3710/src/assembler/testProgram");
 		String programName = "sampleProgram";
 		//System.out.println(programLines.toString());
 		List<List<String>> programInstructions = parseProgramLines(programLines);
