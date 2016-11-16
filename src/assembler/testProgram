@@ -1,3 +1,4 @@
+FirstFunction:
 load $R1 0x41
 load $R2 0x5A
 load $R3 0x71
@@ -6,3 +7,5 @@ store $R3 0x600
 jmpL 0x240C
 store $R1 0x600
 store $R2 0x601
+StringFunction:
+TestFunction:

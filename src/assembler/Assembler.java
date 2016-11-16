@@ -43,6 +43,7 @@ public class Assembler {
 	private static final String JMPG_BIN 	= "010000";
 	private static final String JMP_BIN 		= "010001";
 	private static final String CALL_BIN		= "010010";
+	private static final String FUNCTION_BIN 	= "0000000000010011";
 
 	private static final String RESET = "reset";
 	private static final String LOAD = "load";
@@ -64,10 +65,12 @@ public class Assembler {
 	private static final String JMP = "jmp";
 	private static final String CALL = "call";
 
+	private static final int PROGRAM_OFFSET = 2400;
+
 
 	public static void main(String[] args) {
-		List<String> programLines = readFile("C:/Users/Rusty/workspace/CS_3710/src/assembler/testProgram");
-		String programName = "sampleProgram";
+		List<String> programLines = readFile("C:/Users/Rusty/workspace/CS_3710/bin/assembler/printTestProgram");
+		String programName = "sampleProgramMachineCode";
 		//System.out.println(programLines.toString());
 		List<List<String>> programInstructions = parseProgramLines(programLines);
 		//gets the constants and glyphs from file with a "," at the end of each line.
@@ -78,9 +81,11 @@ public class Assembler {
 		
 		List<String> binaryInstructionList = convertInstrToBinary(programInstructions);
 		List<String> hexInstructionList = convertBinInstrToHex(binaryInstructionList);
-
 		
 		List<String> outputList = new ArrayList<>(constantsAndGlyphs);
+		for (int i = 1536; i <= 9215; i++) {
+			outputList.add(i, "0000");
+		}
 		outputList.add(0, "memory_initialization_vector=");
 		outputList.add(0, "memory_initialization_radix=16;");
 		outputList.addAll(hexInstructionList);
@@ -98,10 +103,12 @@ public class Assembler {
 			FileOutputStream fos = new FileOutputStream(fout);
 		 
 			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
-
+			int index = -2;
 			for (String anOutputList : outputList) {
+
 				bw.write(anOutputList);
-				System.out.println(anOutputList);
+				System.out.println(Integer.toHexString(index) + " " + anOutputList);
+				index++;
 				bw.newLine();
 			}
 			bw.close();
@@ -116,12 +123,27 @@ public class Assembler {
 		List<String> hexLines = new ArrayList<>();
 		for (int i = 0; i < binaryInstructionList.size(); i++) {
 			String line = binaryInstructionList.get(i);
-			String firstHalf = line.substring(0, 8);
-			String secondHalf = line.substring(8, 16);
-			int binFirstHalf = Integer.parseInt(firstHalf, 2);
-			int binSecondHalf = Integer.parseInt(secondHalf, 2);
-			String hexStr = Integer.toString(binFirstHalf, 16) + Integer.toString(binSecondHalf, 16);
-			
+//			String firstHalf = line.substring(0, 8);
+//			String secondHalf = line.substring(8, 16);
+//			int binFirstHalf = Integer.parseInt(firstHalf, 2);
+//			int binSecondHalf = Integer.parseInt(secondHalf, 2);
+//			String hexStr = Integer.toString(binFirstHalf, 16) + Integer.toString(binSecondHalf, 16);
+
+			//FIXME: Trying to simplify this because I think it's ruining things
+			line = line.substring(0, 16);
+			int binary = Integer.parseInt(line, 2);
+			String hexStr = Integer.toString(binary, 16);
+
+			if (hexStr.length() == 1) {
+				hexStr = "000" + hexStr;
+			}
+			else if (hexStr.length() == 2) {
+				hexStr = "00" + hexStr;
+			}
+			else if (hexStr.length() == 3) {
+				hexStr = "0" + hexStr;
+			}
+
 			hexLines.add(hexStr + ",");
 		}
 		return hexLines;
@@ -134,8 +156,11 @@ public class Assembler {
 		for (int i = 0; i < programInstructions.size(); i++) {
 			List<String> progInstruction = programInstructions.get(i);
 			StringBuilder binaryLine = new StringBuilder();
-			
-			if (progInstruction.get(0).equals(RESET)) {
+			//check if it's a function and assign it an arbitrary value
+			if (progInstruction.get(0).endsWith(":") && progInstruction.size() == 1) {
+				binaryLine.append(FUNCTION_BIN);
+			}
+			else if (progInstruction.get(0).equals(RESET)) {
 				binaryLine.append(RESET_BIN);
 				binaryLine.append("0000000000");
 			}
@@ -318,8 +343,8 @@ public class Assembler {
 	}
 
 	private static String convertHexAddressToBinary(String arg) {
-		int hexInteger = Integer.parseInt(arg, 16);
-		String binaryString = Integer.toString(hexInteger, 2);
+		int decimalInteger = Integer.parseInt(arg, 16);
+		String binaryString = Integer.toString(decimalInteger, 2);
 //		StringBuilder sb = new StringBuilder();
 //
 //		for (int i = 0; i < 16 - binaryString.length(); i++) {
@@ -338,12 +363,21 @@ public class Assembler {
 	private static Map<String, Integer> calcFunctionLocations(List<List<String>> programInstructions) {
 //TODO: actually check functions
 		Map<String, Integer> functionLocations = new HashMap<>();
+		int functionLocationCounter = 0;
 		for (int i = 0; i < programInstructions.size(); i++) {
 			List<String> instruction = programInstructions.get(i);
 			String instr = instruction.get(0);
-			//if it starts with a . it is a function and we add it to the functionLocations map 
-			if (instr.startsWith(".")) {
-				functionLocations.put(instr, i);
+
+			//I need to add up the instructions that take two lines and add them to the actual counter
+			if (instr.equals(STORE) || instr.equals(LOAD) || instr.equals(MOVE) || instr.equals(JMPLE) ||
+					instr.equals(JMPL) || instr.equals(JMP) || instr.equals(JMPEQ) || instr.equals(JMPGE) ||
+					instr.equals(JMPG)) {
+				functionLocationCounter++;
+			}
+
+			//if it ends with a : it is a function and we add it to the functionLocations map
+			if (instr.endsWith(":") && instruction.size() == 1) {
+				functionLocations.put(instr, i + functionLocationCounter + PROGRAM_OFFSET);
 			}
 		}
 		return functionLocations;
