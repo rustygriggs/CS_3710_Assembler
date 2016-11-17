@@ -1,5 +1,6 @@
 package assembler;
 
+import javax.xml.stream.events.Characters;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -7,11 +8,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Assembler {
 	//TODO: stick all these constants in their own file
@@ -23,6 +20,8 @@ public class Assembler {
 	private static final String REG_6 = "$R6";
 	private static final String REG_7 = "$R7";
 	private static final String REG_8 = "$R8";
+	private static final String R_STRING = "$Rstring";
+	private static final String R_SCREEN = "$Rscreen";
 
 	private static final String RESET_BIN 	= "000000";
 	private static final String LOAD_BIN 	= "000001";
@@ -58,6 +57,7 @@ public class Assembler {
 	private static final String SUB = "sub";
 	private static final String TEST = "test";
 	private static final String JMPEQ = "jmpEq";
+	private static final String JMPNE = "jmpNE";
 	private static final String JMPLE = "jmpLE";
 	private static final String JMPGE = "jmpGE";
 	private static final String JMPL = "jmpL";
@@ -66,14 +66,17 @@ public class Assembler {
 	private static final String CALL = "call";
 	private static final String PRINT = "print";
 
-	private static final int PROGRAM_OFFSET = 2400;
+	private static final int PROGRAM_OFFSET = 9216;
 
 	static int _endOfProgram = 0;
-	static List<String> stringCharacters = new ArrayList<>();
+	static List<Character> stringCharacters = new ArrayList<>();
+	static Map<String, Integer> _functionLocations;
+	static int _screenPosition = 1536;
+	static boolean firstPrint = true;
 
 
 	public static void main(String[] args) {
-		List<String> programLines = readFile("C:/Users/Rusty/workspace/CS_3710/bin/assembler/printTestProgram");
+		List<String> programLines = readFile("C:/Users/Rusty/workspace/CS_3710/bin/assembler/printFunction");
 		String programName = "sampleProgramMachineCode";
 		//System.out.println(programLines.toString());
 		List<List<String>> programInstructions = parseProgramLines(programLines);
@@ -81,7 +84,7 @@ public class Assembler {
 		List<String> constantsAndGlyphs = readFile("C:/Users/Rusty/workspace/CS_3710/src/assembler/constants_and_glyphs.txt");
 		
 		//probably don't need this until I write jump instructions and things like that. but it has been implemented.
-		Map<String, Integer> functionLocations = calcFunctionLocations(programInstructions);
+		_functionLocations = calcFunctionLocations(programInstructions);
 		
 		List<String> binaryInstructionList = convertInstrToBinary(programInstructions);
 		List<String> hexInstructionList = convertBinInstrToHex(binaryInstructionList);
@@ -94,7 +97,12 @@ public class Assembler {
 		outputList.add(0, "memory_initialization_vector=");
 		outputList.add(0, "memory_initialization_radix=16;");
 		outputList.addAll(hexInstructionList);
-		//TODO: add strings to end of program right here
+		//convert characters to strings and add them to the end of the program
+		List<String> stringCharStrings = new ArrayList<>();
+		for (int i = 0; i < stringCharacters.size(); i++ ) {
+			stringCharStrings.add(stringCharacters.get(i).toString());
+		}
+		outputList.addAll(stringCharStrings);
 		String lastInstr = outputList.get(outputList.size() -1);
 		lastInstr = lastInstr.substring(0, lastInstr.length()-1);
 		lastInstr = lastInstr + ";";
@@ -225,8 +233,55 @@ public class Assembler {
 						binaryLine, CALL_BIN);
 			}
 			else if (progInstruction.get(0).equals(PRINT)) {
-				//TODO: add jump to print function
-				//todo: add characters to stringCharacters list to be added at the end of the program
+				if (firstPrint) {
+					//loads the screen position into the screen pos register into the
+					List<String> loadRscreenInstruction = new ArrayList<>();
+					loadRscreenInstruction.add("load");
+					loadRscreenInstruction.add(R_SCREEN);
+					String hexScreenStart = Integer.toHexString(_screenPosition);
+					hexScreenStart = "0x" + hexScreenStart;
+					loadRscreenInstruction.add(hexScreenStart);
+					binaryLine = new StringBuilder();
+					binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, loadRscreenInstruction,
+							binaryLine, CALL_BIN);
+					binaryLine.append(',');
+					machineCodeInstructionList.add(binaryLine.toString());
+
+					//loads the string characters position into the $Rstring register
+					List<String> loadRStringInstruction = new ArrayList<>();
+					loadRStringInstruction.add("load");
+					loadRStringInstruction.add(R_STRING);
+					String hexEndOfProgram = Integer.toHexString(_endOfProgram);
+					hexEndOfProgram = "0x" + hexEndOfProgram;
+					loadRStringInstruction.add(hexEndOfProgram);
+					binaryLine = new StringBuilder();
+					binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, loadRStringInstruction,
+							binaryLine, CALL_BIN);
+					binaryLine.append(',');
+					machineCodeInstructionList.add(binaryLine.toString());
+					firstPrint = false;
+				}
+				StringBuilder sb = new StringBuilder();
+				for (int j = 1; j < progInstruction.size(); j++) {
+					if (j == progInstruction.size() - 1) {
+						sb.append(progInstruction.get(j));
+					}
+					else {
+						sb.append(progInstruction.get(j) + " ");
+					}
+				}
+				String stringToBeAdded = sb.toString();
+				for (int j = 0; j < stringToBeAdded.length(); j++) {
+					if (stringToBeAdded.charAt(j) != '"') {
+						stringCharacters.add(stringToBeAdded.charAt(j));
+					}
+				}
+				stringCharacters.add('`');
+				List<String> callPrintInstruction = new ArrayList<>();
+				callPrintInstruction.add("call");
+				callPrintInstruction.add("Print:");
+				binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, callPrintInstruction,
+						binaryLine, CALL_BIN);
 			}
 			else {
 				//TODO: keep adding instructions calculations here.
@@ -240,6 +295,13 @@ public class Assembler {
 	private static StringBuilder getBinaryLineAndConvertToMachineCode(List<String> machineCodeInstructionList, List<String> progInstruction,
 																	  StringBuilder binaryLine, String instrBinaryCode) {
 		String firstArg = calcArgBin(progInstruction.get(1));
+		String functionLocation;
+		if (firstArg.endsWith(":")) { //this argument is actually a function.
+			int functionLocationInt = _functionLocations.get(firstArg);
+			functionLocation = Integer.toBinaryString(functionLocationInt);
+			firstArg = functionLocation;
+		}
+
 		String secondArg = "";
 		if (progInstruction.size() > 2) {
 			secondArg = calcArgBin(progInstruction.get(2));
@@ -307,6 +369,16 @@ public class Assembler {
 			} else if (arg.equals(REG_8)) {
 				return "01000";
 			}
+			else if (arg.equals(R_STRING)) {
+				return "010101";
+//				String binaryString = Integer.toString(_endOfProgram, 2);
+//				return binaryString;
+			}
+			else if (arg.equals(R_SCREEN)) {
+				return "010110";
+//				return Integer.toBinaryString(_screenPosition);
+//				return "10010000000000"; //TODO: this is just for now...will need to be a variable that can be incremented and stuff
+			}
 			//if it's not a predefined register (1-8), then it's an incorrect argument and an exception is thrown
 			else {
 				try {
@@ -320,6 +392,10 @@ public class Assembler {
 		//if it's an address, starts with '0x'
 		else if (arg.startsWith("0x")) {
 			return convertHexAddressToBinary(arg.substring(2, arg.length()));
+		}
+		//if it's a function, it ends with ":" and just needs to go to the next line
+		else if (arg.endsWith(":")) {
+			//TODO: do I need to do anything here?
 		}
 		//if it's anything else, it's probably just a number
 		else {
@@ -348,13 +424,6 @@ public class Assembler {
 	private static String convertHexAddressToBinary(String arg) {
 		int decimalInteger = Integer.parseInt(arg, 16);
 		String binaryString = Integer.toString(decimalInteger, 2);
-//		StringBuilder sb = new StringBuilder();
-//
-//		for (int i = 0; i < 16 - binaryString.length(); i++) {
-//			sb.append("0");
-//		}
-//		sb.append(binaryString);
-//		return sb.toString();
 		return binaryString;
 	}
 
@@ -391,7 +460,18 @@ public class Assembler {
 			List<String> programLines) {
 		List<List<String>> listOfLists = new ArrayList<>();
 		for (String instruction : programLines) {
-			List<String> tokens = Arrays.asList(instruction.split("\\s+"));
+			List<String> tokens = new ArrayList<>(Arrays.asList(instruction.split("\\s+")));
+			boolean isPartOfComment = false;
+			for (Iterator<String> iterator = tokens.iterator(); iterator.hasNext();) {
+				String string = iterator.next();
+				if (string.startsWith("#")) {
+					// Remove the current element from the iterator and the list.
+					isPartOfComment = true;
+				}
+				if (isPartOfComment) {
+					iterator.remove();
+				}
+			}
 			listOfLists.add(tokens);
 		}
 		return listOfLists;
@@ -412,7 +492,4 @@ public class Assembler {
 		}
 		return lines;
 	}
-	
-	
-
 }
