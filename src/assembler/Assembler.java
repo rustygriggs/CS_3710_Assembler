@@ -64,8 +64,12 @@ public class Assembler {
 	private static final String JMPG = "jmpG";
 	private static final String JMP = "jmp";
 	private static final String CALL = "call";
+	private static final String PRINT = "print";
 
 	private static final int PROGRAM_OFFSET = 2400;
+
+	static int _endOfProgram = 0;
+	static List<String> stringCharacters = new ArrayList<>();
 
 
 	public static void main(String[] args) {
@@ -86,9 +90,11 @@ public class Assembler {
 		for (int i = 1536; i <= 9215; i++) {
 			outputList.add(i, "0000");
 		}
+
 		outputList.add(0, "memory_initialization_vector=");
 		outputList.add(0, "memory_initialization_radix=16;");
 		outputList.addAll(hexInstructionList);
+		//TODO: add strings to end of program right here
 		String lastInstr = outputList.get(outputList.size() -1);
 		lastInstr = lastInstr.substring(0, lastInstr.length()-1);
 		lastInstr = lastInstr + ";";
@@ -123,13 +129,6 @@ public class Assembler {
 		List<String> hexLines = new ArrayList<>();
 		for (int i = 0; i < binaryInstructionList.size(); i++) {
 			String line = binaryInstructionList.get(i);
-//			String firstHalf = line.substring(0, 8);
-//			String secondHalf = line.substring(8, 16);
-//			int binFirstHalf = Integer.parseInt(firstHalf, 2);
-//			int binSecondHalf = Integer.parseInt(secondHalf, 2);
-//			String hexStr = Integer.toString(binFirstHalf, 16) + Integer.toString(binSecondHalf, 16);
-
-			//FIXME: Trying to simplify this because I think it's ruining things
 			line = line.substring(0, 16);
 			int binary = Integer.parseInt(line, 2);
 			String hexStr = Integer.toString(binary, 16);
@@ -224,6 +223,10 @@ public class Assembler {
 			else if (progInstruction.get(0).equals(CALL)) {
 				binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, progInstruction,
 						binaryLine, CALL_BIN);
+			}
+			else if (progInstruction.get(0).equals(PRINT)) {
+				//TODO: add jump to print function
+				//todo: add characters to stringCharacters list to be added at the end of the program
 			}
 			else {
 				//TODO: keep adding instructions calculations here.
@@ -380,6 +383,7 @@ public class Assembler {
 				functionLocations.put(instr, i + functionLocationCounter + PROGRAM_OFFSET);
 			}
 		}
+		_endOfProgram = functionLocationCounter + programInstructions.size();
 		return functionLocations;
 	}
 

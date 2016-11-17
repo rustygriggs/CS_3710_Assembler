@@ -1,0 +1,4 @@
+Print:
+load $R1 $Rstring
+load $R2 $Rscreen
+store $R2 $R1
