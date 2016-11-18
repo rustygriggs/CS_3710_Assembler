@@ -1,6 +1,5 @@
 package assembler;
 
-import javax.xml.stream.events.Characters;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -42,7 +41,10 @@ public class Assembler {
 	private static final String JMPG_BIN 	= "010000";
 	private static final String JMP_BIN 		= "010001";
 	private static final String CALL_BIN		= "010010";
-	private static final String FUNCTION_BIN 	= "0000000000010011";
+	public static final String JMPNE_BIN	= "010011";
+	private static final String STORE_R_BIN = "011000";
+	private static final String JMPF_BIN = "011001";
+	private static final String FUNCTION_BIN 	= "0000000000010010";
 
 	private static final String RESET = "reset";
 	private static final String LOAD = "load";
@@ -65,6 +67,8 @@ public class Assembler {
 	private static final String JMP = "jmp";
 	private static final String CALL = "call";
 	private static final String PRINT = "print";
+	private static final String STORE_R = "storeR";
+	private static final String JMPF = "jmpF";
 
 	private static final int PROGRAM_OFFSET = 9216;
 
@@ -88,21 +92,19 @@ public class Assembler {
 		
 		List<String> binaryInstructionList = convertInstrToBinary(programInstructions);
 		List<String> hexInstructionList = convertBinInstrToHex(binaryInstructionList);
-		
+
 		List<String> outputList = new ArrayList<>(constantsAndGlyphs);
 		for (int i = 1536; i <= 9215; i++) {
-			outputList.add(i, "0000");
+			outputList.add(i, "0000,");
 		}
 
 		outputList.add(0, "memory_initialization_vector=");
 		outputList.add(0, "memory_initialization_radix=16;");
 		outputList.addAll(hexInstructionList);
 		//convert characters to strings and add them to the end of the program
-		List<String> stringCharStrings = new ArrayList<>();
-		for (int i = 0; i < stringCharacters.size(); i++ ) {
-			stringCharStrings.add(stringCharacters.get(i).toString());
-		}
-		outputList.addAll(stringCharStrings);
+		List<String> finalStringCharStrings = getCharacterStringsForEndOfFile();
+		outputList.addAll(finalStringCharStrings);
+
 		String lastInstr = outputList.get(outputList.size() -1);
 		lastInstr = lastInstr.substring(0, lastInstr.length()-1);
 		lastInstr = lastInstr + ";";
@@ -110,7 +112,30 @@ public class Assembler {
 		
 		saveToFile(programName + ".coe", outputList);		
 	}
-	
+
+	private static List<String> getCharacterStringsForEndOfFile() {
+		List<String> stringCharStrings = new ArrayList<>();
+		for (int i = 0; i < stringCharacters.size(); i++ ) {
+			int charInt = stringCharacters.get(i);
+			stringCharStrings.add(Integer.toHexString(charInt));
+		}
+		List<String> finalStringCharStrings = new ArrayList<>();
+		for (int i = 0; i < stringCharStrings.size(); i++) {
+			String s = stringCharStrings.get(i);
+			if (s.length() == 1) {
+				s = "000" + s;
+			}
+			else if (s.length() == 2) {
+				s = "00" + s;
+			}
+			else if (s.length() == 3) {
+				s = "0" + s;
+			}
+			finalStringCharStrings.add(s + ',');
+		}
+		return finalStringCharStrings;
+	}
+
 	private static void saveToFile(String programFileName, List<String> outputList) {
 		try {
 			File fout = new File(programFileName);
@@ -232,6 +257,18 @@ public class Assembler {
 				binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, progInstruction,
 						binaryLine, CALL_BIN);
 			}
+			else if (progInstruction.get(0).equals(JMPNE)) {
+				binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, progInstruction,
+						binaryLine, JMPNE_BIN);
+			}
+			else if (progInstruction.get(0).equals(STORE_R)) {
+				convertToMachineCodeInstruction(progInstruction, binaryLine, STORE_R_BIN);
+			}
+			else if (progInstruction.get(0).equals(JMPF)) {
+				binaryLine.append("0000000000");
+				binaryLine.append(JMPF_BIN);
+//				convertToMachineCodeInstruction(progInstruction, binaryLine, JMPF_BIN);
+			}
 			else if (progInstruction.get(0).equals(PRINT)) {
 				if (firstPrint) {
 					//loads the screen position into the screen pos register into the
@@ -243,7 +280,7 @@ public class Assembler {
 					loadRscreenInstruction.add(hexScreenStart);
 					binaryLine = new StringBuilder();
 					binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, loadRscreenInstruction,
-							binaryLine, CALL_BIN);
+							binaryLine, LOAD_BIN);
 					binaryLine.append(',');
 					machineCodeInstructionList.add(binaryLine.toString());
 
@@ -251,12 +288,12 @@ public class Assembler {
 					List<String> loadRStringInstruction = new ArrayList<>();
 					loadRStringInstruction.add("load");
 					loadRStringInstruction.add(R_STRING);
-					String hexEndOfProgram = Integer.toHexString(_endOfProgram);
+					String hexEndOfProgram = Integer.toHexString(_endOfProgram + 9216);
 					hexEndOfProgram = "0x" + hexEndOfProgram;
 					loadRStringInstruction.add(hexEndOfProgram);
 					binaryLine = new StringBuilder();
 					binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, loadRStringInstruction,
-							binaryLine, CALL_BIN);
+							binaryLine, LOAD_BIN);
 					binaryLine.append(',');
 					machineCodeInstructionList.add(binaryLine.toString());
 					firstPrint = false;
@@ -280,6 +317,7 @@ public class Assembler {
 				List<String> callPrintInstruction = new ArrayList<>();
 				callPrintInstruction.add("call");
 				callPrintInstruction.add("Print:");
+				binaryLine = new StringBuilder();
 				binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, callPrintInstruction,
 						binaryLine, CALL_BIN);
 			}
@@ -316,7 +354,7 @@ public class Assembler {
 		}
 //		binaryLine.append(firstArg);
 		binaryLine.append(instrBinaryCode);
-		machineCodeInstructionList.add(binaryLine.toString());
+		machineCodeInstructionList.add(binaryLine.toString() + ",");
 
 		binaryLine = new StringBuilder();
 		StringBuilder zeros = new StringBuilder();
@@ -370,12 +408,12 @@ public class Assembler {
 				return "01000";
 			}
 			else if (arg.equals(R_STRING)) {
-				return "010101";
+				return "10100"; //register 20
 //				String binaryString = Integer.toString(_endOfProgram, 2);
 //				return binaryString;
 			}
 			else if (arg.equals(R_SCREEN)) {
-				return "010110";
+				return "10101"; //register 21
 //				return Integer.toBinaryString(_screenPosition);
 //				return "10010000000000"; //TODO: this is just for now...will need to be a variable that can be incremented and stuff
 			}
@@ -443,16 +481,20 @@ public class Assembler {
 			//I need to add up the instructions that take two lines and add them to the actual counter
 			if (instr.equals(STORE) || instr.equals(LOAD) || instr.equals(MOVE) || instr.equals(JMPLE) ||
 					instr.equals(JMPL) || instr.equals(JMP) || instr.equals(JMPEQ) || instr.equals(JMPGE) ||
-					instr.equals(JMPG)) {
+					instr.equals(JMPG) || instr.equals(JMPNE)) {
+				functionLocationCounter++;
+			}
+			if (instr.equals(PRINT)) {
 				functionLocationCounter++;
 			}
 
 			//if it ends with a : it is a function and we add it to the functionLocations map
 			if (instr.endsWith(":") && instruction.size() == 1) {
-				functionLocations.put(instr, i + functionLocationCounter + PROGRAM_OFFSET);
+				functionLocations.put(instr, i + functionLocationCounter + PROGRAM_OFFSET + 4); //the 4 is for the extra lines from print
 			}
 		}
-		_endOfProgram = functionLocationCounter + programInstructions.size();
+
+		_endOfProgram = functionLocationCounter + programInstructions.size() + 2; //the 4 is for the 4 lines produced by the first print function
 		return functionLocations;
 	}
 
