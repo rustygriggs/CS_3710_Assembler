@@ -1,0 +1,19 @@
+reset
+load $R1 0x13
+store $R3 0x34fa
+move $R1 $R4
+not $R5
+and $R1 $R2
+or $R1 $R5
+shiftr $R8 1
+shiftl $R7 2
+add $R1 $R2
+sub $R3 $R4
+Label1:
+test $R2 $R2
+jmpEq 0x001
+jmpLE 0xffff
+jmpGE 0x76f8
+jmpL 0xabcd
+jmp 0x23cc
+call Label1
