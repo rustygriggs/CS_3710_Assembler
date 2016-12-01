@@ -80,8 +80,9 @@ public class Assembler {
 
 
 	public static void main(String[] args) {
-		List<String> programLines = readFile("C:/Users/Rusty/workspace/CS_3710/bin/assembler/printFunction");
-		String programName = "sampleProgramMachineCode";
+
+        String programName = "userInputTest";
+        List<String> programLines = readFile("C:/Users/Rusty/workspace/CS_3710/bin/assembler/" + programName);
 		//System.out.println(programLines.toString());
 		List<List<String>> programInstructions = parseProgramLines(programLines);
 		//gets the constants and glyphs from file with a "," at the end of each line.
@@ -91,6 +92,9 @@ public class Assembler {
 		_functionLocations = calcFunctionLocations(programInstructions);
 		
 		List<String> binaryInstructionList = convertInstrToBinary(programInstructions);
+        for (String s : binaryInstructionList) {
+            //System.out.println(s);
+        }
 		List<String> hexInstructionList = convertBinInstrToHex(binaryInstructionList);
 
 		List<String> outputList = new ArrayList<>(constantsAndGlyphs);
@@ -157,8 +161,7 @@ public class Assembler {
 		}
 	}
 
-	private static List<String> convertBinInstrToHex(
-			List<String> binaryInstructionList) {
+	private static List<String> convertBinInstrToHex(List<String> binaryInstructionList) {
 		List<String> hexLines = new ArrayList<>();
 		for (int i = 0; i < binaryInstructionList.size(); i++) {
 			String line = binaryInstructionList.get(i);
@@ -334,7 +337,7 @@ public class Assembler {
 																	  StringBuilder binaryLine, String instrBinaryCode) {
 		String firstArg = calcArgBin(progInstruction.get(1));
 		String functionLocation;
-		if (firstArg.endsWith(":")) { //this argument is actually a function.
+		if (firstArg.endsWith(":")) { //this argument is actually a function/label.
 			int functionLocationInt = _functionLocations.get(firstArg);
 			functionLocation = Integer.toBinaryString(functionLocationInt);
 			firstArg = functionLocation;
@@ -481,7 +484,7 @@ public class Assembler {
 			//I need to add up the instructions that take two lines and add them to the actual counter
 			if (instr.equals(STORE) || instr.equals(LOAD) || instr.equals(MOVE) || instr.equals(JMPLE) ||
 					instr.equals(JMPL) || instr.equals(JMP) || instr.equals(JMPEQ) || instr.equals(JMPGE) ||
-					instr.equals(JMPG) || instr.equals(JMPNE)) {
+					instr.equals(JMPG) || instr.equals(JMPNE) || instr.equals(CALL)) {
 				functionLocationCounter++;
 			}
 			if (instr.equals(PRINT)) {

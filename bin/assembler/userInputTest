@@ -1,0 +1,25 @@
+print "I guess I need this blah blah blah"
+call GetChar:
+GetChar:
+load $R1 0x0000 #we need to decide on the address
+load $R2 0x00FF #8'b11111111 - default output of keyboard
+test $R1 $R2 #until it's not 00FF, keep looping
+jmpEq GetChar:
+load $R3 0x000D # "Enter"
+test $R3 $R1
+jmpEq End:
+storeR $Rscreen $R1
+load $R4 0x0001
+add $Rscreen $R4 #increment $Rscreen
+Print: #you can only  do comments on the same line as code, not its own line
+move $R1 $Rstring #load character
+move $R2 $Rscreen #load screen position
+storeR $R1 $R2 #store on screen
+load $R3 0x0001 #load 1 into $R3
+load $R4 0x0060 #'`' marks the end of the string
+add $Rstring $R3
+test $Rstring $R4
+add $Rscreen $R3
+jmpNE Print:
+jmpF
+End:

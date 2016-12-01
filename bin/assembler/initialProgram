@@ -1,0 +1,38 @@
+print "Welcome to Adventure!" #This is the string to be printed
+print "Actions: use, get, run, left, right, proceed" #This can be adjusted. #wait here for a few seconds
+call ClearScreen:
+print "You have entered a room. There is a rope, a baby, and a backpack"
+input #get user input - this will change...the assembly will handle it more
+store $R8 0x0316 #"get rope" is the right answer
+test $Ruser $R8
+jmpNE WrongAnswer:
+print "Good Work. Continuing" #somehow we need to wait here for a few seconds
+call ClearScreen:
+jmp 0x2500 #get user input here and test it
+Print:
+move $R1 $Rstring #load character
+move $R2 $Rscreen #load screen position
+storeR $R1 $R2 #store on screen
+load $R3 0x0001 #load 1 into $R3
+load $R4 0x0060 #'`' marks the end of the string
+add $Rstring $R3
+test $Rstring $R4
+add $Rscreen $R3
+jmpNE Print:
+jmpF
+ClearScreen:
+call LoadBegScreenPos:
+store $Rscreen 0x0020 #store a space onto the screen
+load $R1 0x0001
+add $Rscreen $R1 #increment screen position
+load $R2 0x23FF #end of screen
+test $R2 $Rscreen
+jmpNE ClearScreen:
+jmpF
+LoadBegScreenPos:
+load $Rscreen 0x0600 #load the starting screen position into $Rscreen
+jmpF
+WrongAnswer:
+call ClearScreen:
+print "You chose poorly. You have died."
+jmpF
