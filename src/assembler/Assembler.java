@@ -22,33 +22,38 @@ public class Assembler {
 	private static final String R_STRING = "$Rstring";
 	private static final String R_SCREEN = "$Rscreen";
 
-	private static final String RESET_BIN 	= "000000";
+	private static final String NOP_BIN 	= "000000";
 	private static final String LOAD_BIN 	= "000001";
 	private static final String STORE_BIN	= "000010";
-	private static final String MOVE_BIN 	= "000011";
-	private static final String NOT_BIN 	= "000100";
-	private static final String AND_BIN 	= "000101";
-	private static final String OR_BIN 		= "000110";
-	private static final String SHIFTR_BIN 	= "000111";
-	private static final String SHIFTL_BIN 	= "001000";
-	private static final String ADD_BIN 	= "001001";
-	private static final String SUB_BIN 	= "001010";
-	private static final String TEST_BIN 	= "001011";
-	private static final String JMPEQ_BIN 	= "001100";
-	private static final String JMPLE_BIN 	= "001101";
-	private static final String JMPGE_BIN 	= "001110";
-	private static final String JMPL_BIN 	= "001111";
-	private static final String JMPG_BIN 	= "010000";
-	private static final String JMP_BIN 	= "010001";
-	private static final String CALL_BIN	= "010010";
-	public static final String JMPNE_BIN	= "010011";
-	private static final String STORE_R_BIN = "011000";
-	private static final String JMPF_BIN 	= "011001";
-	private static final String FUNCTION_BIN 	= "0000000000010010";
+	private static final String LOADI_BIN	= "000011";
+	private static final String STORE_R_BIN = "000100";
+	private static final String MOVE_BIN 	= "000101";
+	private static final String NOT_BIN 	= "000110";
+	private static final String AND_BIN 	= "000111";
+	private static final String OR_BIN 		= "001000";
+	private static final String SHIFTR_BIN 	= "001001";
+	private static final String SHIFTL_BIN 	= "001010";
+	private static final String ADD_BIN 	= "001011";
+	private static final String SUB_BIN 	= "001100";
+	private static final String TEST_BIN 	= "001101";
+	private static final String JMPEQ_BIN 	= "001110";
+	public static final String JMPNE_BIN	= "001111";
+	private static final String JMPLE_BIN 	= "010000";
+	private static final String JMPGE_BIN 	= "010001";
+	private static final String JMPL_BIN 	= "010010";
+	private static final String JMPG_BIN 	= "010011";
+	private static final String JMPF_BIN 	= "010100";
+	private static final String JMP_BIN 	= "010101";
+	private static final String CALL_BIN	= "010110";
+	private static final String PUSH_BIN	= "010111";
+	private static final String POP_BIN		= "011000";
+	private static final String RESET_BIN 	= "011001";
+	private static final String FUNCTION_BIN 	= "0000000000000000"; //essentially a nop
 
 	private static final String RESET = "reset";
 	private static final String LOAD = "load";
 	private static final String STORE = "store";
+	private static final String LOADI = "loadi";
 	private static final String MOVE = "move";
 	private static final String NOT = "not";
 	private static final String AND = "and";
@@ -81,7 +86,7 @@ public class Assembler {
 
 	public static void main(String[] args) {
 
-        String programName = "userInputTest";
+        String programName = "printFunction";
         List<String> programLines = readFile("C:/Users/Rusty/workspace/CS_3710/bin/assembler/" + programName);
 		//System.out.println(programLines.toString());
 		List<List<String>> programInstructions = parseProgramLines(programLines);
@@ -205,6 +210,9 @@ public class Assembler {
 			else if (progInstruction.get(0).equals(STORE)) {
 				binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, progInstruction, binaryLine, STORE_BIN);
 			}
+			else if (progInstruction.get(0).equals(LOADI)) {
+				binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, progInstruction, binaryLine, LOADI_BIN);
+			}
 			else if (progInstruction.get(0).equals(MOVE)) {
 				convertToMachineCodeInstruction(progInstruction, binaryLine, MOVE_BIN);
 			}
@@ -276,27 +284,27 @@ public class Assembler {
 				if (firstPrint) {
 					//loads the screen position into the screen pos register into the
 					List<String> loadRscreenInstruction = new ArrayList<>();
-					loadRscreenInstruction.add("load");
+					loadRscreenInstruction.add("loadi");
 					loadRscreenInstruction.add(R_SCREEN);
 					String hexScreenStart = Integer.toHexString(_screenPosition);
 					hexScreenStart = "0x" + hexScreenStart;
 					loadRscreenInstruction.add(hexScreenStart);
 					binaryLine = new StringBuilder();
 					binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, loadRscreenInstruction,
-							binaryLine, LOAD_BIN);
+							binaryLine, LOADI_BIN);
 					binaryLine.append(',');
 					machineCodeInstructionList.add(binaryLine.toString());
 
 					//loads the string characters position into the $Rstring register
 					List<String> loadRStringInstruction = new ArrayList<>();
-					loadRStringInstruction.add("load");
+					loadRStringInstruction.add("loadi");
 					loadRStringInstruction.add(R_STRING);
 					String hexEndOfProgram = Integer.toHexString(_endOfProgram + 9216);
 					hexEndOfProgram = "0x" + hexEndOfProgram;
 					loadRStringInstruction.add(hexEndOfProgram);
 					binaryLine = new StringBuilder();
 					binaryLine = getBinaryLineAndConvertToMachineCode(machineCodeInstructionList, loadRStringInstruction,
-							binaryLine, LOAD_BIN);
+							binaryLine, LOADI_BIN);
 					binaryLine.append(',');
 					machineCodeInstructionList.add(binaryLine.toString());
 					firstPrint = false;
@@ -420,7 +428,7 @@ public class Assembler {
 //				return Integer.toBinaryString(_screenPosition);
 //				return "10010000000000"; //TODO: this is just for now...will need to be a variable that can be incremented and stuff
 			}
-			//if it's not a predefined register (1-8), then it's an incorrect argument and an exception is thrown
+			//if it's not a predefined register (1-8, Rstring, Rscreen), then it's an incorrect argument and an exception is thrown
 			else {
 				try {
 					String message = String.format("%s is not a predefined register, choose from $R1 to $R8", arg);

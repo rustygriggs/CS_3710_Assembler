@@ -23,3 +23,4 @@ add $Rscreen $R3
 jmpNE Print:
 jmpF
 End:
+jmp 0x7AAA

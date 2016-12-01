@@ -1,5 +1,5 @@
 print "Hello World" #This is the string to be printed
-jmp 0x2425
+jmp End:
 Print: #you can only  do comments on the same line as code, not its own line
 move $R1 $Rstring #load character
 move $R2 $Rscreen #load screen position
@@ -11,3 +11,5 @@ test $Rstring $R4
 add $Rscreen $R3
 jmpNE Print:
 jmpF
+End:
+jmp 0x7AAA
