@@ -1,9 +1,8 @@
 print "Hello World" #This is the string to be printed
 jmp End:
 Print: #you can only  do comments on the same line as code, not its own line
-move $R1 $Rstring #load character
-move $R2 $Rscreen #load screen position
-storeR $R1 $R2 #store on screen
+loadR $R1 $Rstring #load character
+storeR $R1 $Rscreen #store on screen
 load $R3 0x0001 #load 1 into $R3
 load $R4 0x0060 #'`' marks the end of the string
 add $Rstring $R3

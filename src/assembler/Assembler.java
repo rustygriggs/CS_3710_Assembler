@@ -48,6 +48,7 @@ public class Assembler {
 	private static final String PUSH_BIN	= "010111";
 	private static final String POP_BIN		= "011000";
 	private static final String RESET_BIN 	= "011001";
+	private static final String LOADR_BIN 	= "011010";
 	private static final String FUNCTION_BIN 	= "0000000000000000"; //essentially a nop
 
 	private static final String RESET = "reset";
@@ -74,6 +75,7 @@ public class Assembler {
 	private static final String PRINT = "print";
 	private static final String STORE_R = "storeR";
 	private static final String JMPF = "jmpF";
+	private static final String LOADR = "loadR";
 
 	private static final int PROGRAM_OFFSET = 9216;
 
@@ -274,6 +276,9 @@ public class Assembler {
 			}
 			else if (progInstruction.get(0).equals(STORE_R)) {
 				convertToMachineCodeInstruction(progInstruction, binaryLine, STORE_R_BIN);
+			}
+			else if (progInstruction.get(0).equals(LOADR)) {
+				convertToMachineCodeInstruction(progInstruction, binaryLine, LOADR_BIN);
 			}
 			else if (progInstruction.get(0).equals(JMPF)) {
 				binaryLine.append("0000000000");
@@ -490,9 +495,9 @@ public class Assembler {
 			String instr = instruction.get(0);
 
 			//I need to add up the instructions that take two lines and add them to the actual counter
-			if (instr.equals(STORE) || instr.equals(LOAD) || instr.equals(MOVE) || instr.equals(JMPLE) ||
+			if (instr.equals(STORE) || instr.equals(LOAD) || instr.equals(JMPLE) ||
 					instr.equals(JMPL) || instr.equals(JMP) || instr.equals(JMPEQ) || instr.equals(JMPGE) ||
-					instr.equals(JMPG) || instr.equals(JMPNE) || instr.equals(CALL)) {
+					instr.equals(JMPG) || instr.equals(JMPNE) || instr.equals(CALL) || instr.equals(LOADI)) {
 				functionLocationCounter++;
 			}
 			if (instr.equals(PRINT)) {
