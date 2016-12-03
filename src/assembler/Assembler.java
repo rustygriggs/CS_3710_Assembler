@@ -89,11 +89,11 @@ public class Assembler {
 	public static void main(String[] args) {
 
         String programName = "printFunction";
-        List<String> programLines = readFile("C:/Users/Rusty/workspace/CS_3710/bin/assembler/" + programName);
+        List<String> programLines = readFile("C:\\Users\\preston\\Documents\\NetBeansProjects\\JavaLibrary1\\CS_3710_Assembler\\bin\\assembler" + programName);
 		//System.out.println(programLines.toString());
 		List<List<String>> programInstructions = parseProgramLines(programLines);
 		//gets the constants and glyphs from file with a "," at the end of each line.
-		List<String> constantsAndGlyphs = readFile("C:/Users/Rusty/workspace/CS_3710/src/assembler/constants_and_glyphs.txt");
+		List<String> constantsAndGlyphs = readFile("C:\\Users\\preston\\Documents\\NetBeansProjects\\JavaLibrary1\\CS_3710_Assembler\\bin\\assembler\\constants_and_glyphs.txt");
 		
 		//probably don't need this until I write jump instructions and things like that. but it has been implemented.
 		_functionLocations = calcFunctionLocations(programInstructions);
